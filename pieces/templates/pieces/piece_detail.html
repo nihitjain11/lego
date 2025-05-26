@@ -1,0 +1,32 @@
+{% extends 'pieces/base.html' %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 offset-md-3">
+        <div class="card">
+            <div class="card-header">
+                <h4>{{ piece.color }} - {{ piece.shape }}</h4>
+            </div>
+            <div class="card-body">
+                {% if piece.image %}
+                <div class="text-center mb-4">
+                    <img src="{{ piece.image.url }}" alt="{{ piece.shape }}" class="img-fluid">
+                </div>
+                {% endif %}
+
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="image" class="form-label">{% if piece.image %}Update{% else %}Upload{% endif %} Image</label>
+                        <input type="file" class="form-control" id="image" name="image" accept="image/*" required>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Save Image</button>
+                        <a href="{% url 'piece_list' %}" class="btn btn-secondary">Back to List</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

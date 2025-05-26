@@ -1,0 +1,63 @@
+{% extends 'pieces/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2>Packet View</h2>
+            <a href="{% url 'piece_list' %}" class="btn btn-primary">Piece View</a>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Select Packet</h5>
+                <div class="d-flex flex-wrap gap-2">
+                    {% for packet in packets_with_pieces %}
+                    <a href="?packet={{ packet }}" 
+                       class="btn {% if selected_packet == packet|stringformat:'s' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                        Packet #{{ packet }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if selected_packet %}
+<div class="row">
+    {% for item in pieces_in_packet %}
+    <div class="col-md-4 col-lg-3 mb-4">
+        <div class="card h-100">
+            <img src="{% static 'pieces/'|add:item.piece.shape|add:'.png' %}" 
+                 class="card-img-top p-3" 
+                 alt="{{ item.piece.shape }}"
+                 onerror="this.style.display='none'">
+            <div class="card-body">
+                <h5 class="card-title">{{ item.piece.shape }}</h5>
+                <p class="card-text">
+                    <strong>Color:</strong> {{ item.piece.color }}<br>
+                    <strong>Count in Packet:</strong> {{ item.count }}
+                </p>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="alert alert-info">No pieces found in packet #{{ selected_packet }}</div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="row">
+    <div class="col-12">
+        <div class="alert alert-info">Select a packet to view its contents</div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
