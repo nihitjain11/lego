@@ -3,6 +3,10 @@ from django.http import JsonResponse
 from django.db.models import Q
 from django.views.decorators.csrf import ensure_csrf_cookie
 from .models import LegoPiece
+import csv
+from io import TextIOWrapper
+from django.db import transaction
+from django.contrib import messages
 
 @ensure_csrf_cookie
 def piece_list(request):
@@ -105,3 +109,39 @@ def packet_list(request):
         'selected_packet': packet_number,
         'pieces_in_packet': pieces_in_packet
     })
+
+def import_csv(request):
+    if request.method == 'POST' and request.FILES.get('csv_file'):
+        csv_file = TextIOWrapper(request.FILES['csv_file'].file, encoding='utf-8')
+        try:
+            with transaction.atomic():
+                reader = csv.DictReader(csv_file)
+                updates = 0
+                creates = 0
+                
+                for row in reader:
+                    piece, created = LegoPiece.objects.update_or_create(
+                        shape=row['shape'],
+                        color=row['color'],
+                        defaults={
+                            'page': int(row['page']),
+                            'total_count': int(row['total_count']),
+                            'remaining_count': int(row.get('remaining_count', row['total_count'])),
+                        }
+                    )
+                    if created:
+                        creates += 1
+                    else:
+                        updates += 1
+                
+                messages.success(
+                    request, 
+                    f'Successfully processed CSV: {creates} new pieces created, {updates} pieces updated.'
+                )
+                return redirect('piece_list')
+                
+        except Exception as e:
+            messages.error(request, f'Error processing CSV: {str(e)}')
+            transaction.rollback()
+            
+    return render(request, 'pieces/import_csv.html')
