@@ -18,8 +18,9 @@
             line-height: 30px;
         }
         .piece-image {
-            max-width: 100px;
-            height: auto;
+            max-width: 150px;
+            height: 150px;
+            object-fit: contain;
         }
         .packet-grid {
             display: grid;
@@ -58,6 +59,7 @@
             <div class="navbar-nav">
                 <a class="nav-link" href="{% url 'piece_list' %}">Piece View</a>
                 <a class="nav-link" href="{% url 'packet_list' %}">Packet View</a>
+                <a class="nav-link" href="{% url 'import_csv' %}">Import CSV</a>
             </div>
         </div>
     </nav>
