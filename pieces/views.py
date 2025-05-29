@@ -1,4 +1,4 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse
 from django.db.models import Q
 from django.views.decorators.csrf import ensure_csrf_cookie
@@ -114,25 +114,36 @@ def import_csv(request):
     if request.method == 'POST' and request.FILES.get('csv_file'):
         csv_file = TextIOWrapper(request.FILES['csv_file'].file, encoding='utf-8')
         try:
+            reader = csv.DictReader(csv_file)
+            required_fields = ['Page', 'Color', 'Shape', 'Count']
+            # Validate CSV headers
+            if not all(field in reader.fieldnames for field in required_fields):
+                missing = [f for f in required_fields if f not in reader.fieldnames]
+                messages.error(request, f'Missing required columns: {", ".join(missing)}')
+                return redirect('import_csv')
+
             with transaction.atomic():
-                reader = csv.DictReader(csv_file)
                 updates = 0
                 creates = 0
                 
-                for row in reader:
-                    piece, created = LegoPiece.objects.update_or_create(
-                        shape=row['shape'],
-                        color=row['color'],
-                        defaults={
-                            'page': int(row['page']),
-                            'total_count': int(row['total_count']),
-                            'remaining_count': int(row.get('remaining_count', row['total_count'])),
-                        }
-                    )
-                    if created:
-                        creates += 1
-                    else:
-                        updates += 1
+                for row_num, row in enumerate(reader, start=1):
+                    try:
+                        piece, created = LegoPiece.objects.update_or_create(
+                            shape=str(row['Shape']),  # Convert shape to string to handle numeric IDs
+                            color=row['Color'].lower(),  # Normalize color case
+                            defaults={
+                                'page': int(row['Page']),
+                                'total_count': int(row['Count']),
+                                'remaining_count': int(row.get('Remain', row['Count'])),
+                            }
+                        )
+                        if created:
+                            creates += 1
+                        else:
+                            updates += 1
+                    except Exception as e:
+                        messages.error(request, f'Error on row {row_num}: {str(e)} - Data: {row}')
+                        raise  # Re-raise to trigger rollback
                 
                 messages.success(
                     request, 
@@ -145,3 +156,14 @@ def import_csv(request):
             transaction.rollback()
             
     return render(request, 'pieces/import_csv.html')
+
+def delete_piece(request, shape):
+    if request.method == 'POST':
+        try:
+            piece = LegoPiece.objects.get(shape=shape)
+            piece.delete()
+            messages.success(request, f'Successfully deleted piece with shape ID: {shape}')
+        except LegoPiece.DoesNotExist:
+            messages.error(request, f'Piece with shape ID {shape} not found')
+        return redirect('piece_list')
+    return JsonResponse({'error': 'Method not allowed'}, status=405)

@@ -7,4 +7,5 @@ urlpatterns = [
     path('pieces/<int:piece_id>/', views.piece_detail, name='piece_detail'),
     path('packets/', views.packet_list, name='packet_list'),
     path('import-csv/', views.import_csv, name='import_csv'),
+    path('delete/<str:shape>/', views.delete_piece, name='delete_piece'),
 ]
