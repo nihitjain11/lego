@@ -6,6 +6,13 @@ name = "pypi"
 [packages]
 pillow = "*"
 django = "*"
+opencv-python = "*"
+pytesseract = "*"
+pdf2image = "*"
+numpy = "*"
+pandas = "*"
+scikit-learn = "*"
+tqdm = "*"
 
 [dev-packages]
 
