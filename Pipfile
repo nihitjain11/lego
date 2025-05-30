@@ -4,13 +4,14 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-pillow = "*"
 django = "*"
 opencv-python = "*"
-pytesseract = "*"
-pdf2image = "*"
+opencv-python-headless = "*"
 numpy = "*"
 pandas = "*"
+pillow = "*"
+pdf2image = "*"
+pytesseract = "*"
 scikit-learn = "*"
 tqdm = "*"
 

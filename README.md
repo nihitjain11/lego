@@ -103,7 +103,7 @@ The project includes several custom management commands to help with data manage
 ### scan_pieces
 Scans PDF pages containing LEGO pieces and validates them against ground truth data.
 ```bash
-python manage.py scan_pieces --pdf "page_number.pdf" [--training]
+python3 manage.py scan_pieces --pdf "page_number.pdf" --training --output static/pieces/detected
 ```
 This command will:
 - Convert PDF pages to images
@@ -153,35 +153,6 @@ The application uses SQLite as its database and stores:
 - Packet distribution information
 - Image references
 
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
-
-### Testing
-
-Run the test suite:
-```bash
-python manage.py test
-```
-
-To test piece detection on a specific page:
-```bash
-python manage.py scan_pieces --pdf "page_number.pdf" --training
-```
-The training mode will validate detections against the ground truth data in the CSV file.
-
 ## License
 
-MIT License
-
-Copyright (c) 2025
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+[Your license information here]

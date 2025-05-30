@@ -66,8 +66,9 @@ class LegoScanner:
                         continue
                         
                     # Split image into top (piece) and bottom (text) parts
+                    # Updated split point to 70% since piece is in upper part
                     height = full_img.shape[0]
-                    split_point = int(height * 0.8)  # Adjusted - piece is roughly 80% of image
+                    split_point = int(height * 0.7)
                     
                     piece_img = full_img[:split_point, :]
                     text_img = full_img[split_point:, :]
@@ -144,54 +145,58 @@ class LegoScanner:
             h, s, v = hsv_color
             l, a, b = lab_color
             
-            # Enhanced color definitions
+            # Enhanced color definitions based on observed values
             COLOR_DEFS = {
                 'white': {
-                    'hsv': {'s_max': 30, 'v_min': 140},
-                    'lab': {'l_min': 200, 'a_range': 15, 'b_range': 15}
+                    'hsv': {'h_range': [95, 105], 's_max': 20, 'v_min': 140},
+                    'lab': {'l_range': [145, 155], 'a_range': [124, 128], 'b_range': [123, 127]}
                 },
                 'black': {
                     'hsv': {'s_max': 30, 'v_max': 50},
                     'lab': {'l_max': 50}
                 },
                 'red': [
-                    {'h_min': 0, 'h_max': 10, 's_min': 100, 'v_min': 50},
-                    {'h_min': 170, 'h_max': 180, 's_min': 100, 'v_min': 50}
+                    {'h_min': 0, 'h_max': 10, 's_min': 200, 'v_min': 150},
+                    {'h_min': 170, 'h_max': 180, 's_min': 200, 'v_min': 150}
                 ],
                 'tan': {
-                    'hsv': {'h_min': 15, 'h_max': 35, 's_min': 30, 's_max': 150},
-                    'lab': {'l_range': [130, 200], 'a_range': [0, 15], 'b_range': [10, 30]}
+                    'hsv': {'h_range': [20, 40], 's_min': 70, 's_max': 150, 'v_min': 140},
+                    'lab': {'l_range': [130, 200], 'a_range': [124, 128], 'b_range': [123, 127]}
                 }
             }
             
-            # Improved tan/white differentiation
-            if (COLOR_DEFS['tan']['hsv']['h_min'] <= h <= COLOR_DEFS['tan']['hsv']['h_max'] and
+            # Check white first (most common)
+            if (COLOR_DEFS['white']['hsv']['h_range'][0] <= h <= COLOR_DEFS['white']['hsv']['h_range'][1] and
+                s <= COLOR_DEFS['white']['hsv']['s_max'] and 
+                v >= COLOR_DEFS['white']['hsv']['v_min'] and
+                COLOR_DEFS['white']['lab']['l_range'][0] <= l <= COLOR_DEFS['white']['lab']['l_range'][1] and
+                COLOR_DEFS['white']['lab']['a_range'][0] <= a <= COLOR_DEFS['white']['lab']['a_range'][1] and
+                COLOR_DEFS['white']['lab']['b_range'][0] <= b <= COLOR_DEFS['white']['lab']['b_range'][1]):
+                self._log(f"Detected WHITE: h={h:.0f}, s={s:.0f}, v={v:.0f}, l={l:.0f}")
+                return 'white'
+            
+            # Check tan (second most common)
+            if (COLOR_DEFS['tan']['hsv']['h_range'][0] <= h <= COLOR_DEFS['tan']['hsv']['h_range'][1] and
                 COLOR_DEFS['tan']['hsv']['s_min'] <= s <= COLOR_DEFS['tan']['hsv']['s_max'] and
+                v >= COLOR_DEFS['tan']['hsv']['v_min'] and
                 COLOR_DEFS['tan']['lab']['l_range'][0] <= l <= COLOR_DEFS['tan']['lab']['l_range'][1] and
                 COLOR_DEFS['tan']['lab']['a_range'][0] <= a <= COLOR_DEFS['tan']['lab']['a_range'][1] and
                 COLOR_DEFS['tan']['lab']['b_range'][0] <= b <= COLOR_DEFS['tan']['lab']['b_range'][1]):
-                self._log(f"Detected TAN: h={h:.0f}, s={s:.0f}, l={l:.0f}, a={a:.0f}, b={b:.0f}")
+                self._log(f"Detected TAN: h={h:.0f}, s={s:.0f}, v={v:.0f}, l={l:.0f}")
                 return 'tan'
             
-            # Check white/black
-            if s < COLOR_DEFS['white']['hsv']['s_max'] and v >= COLOR_DEFS['white']['hsv']['v_min']:
-                if (l >= COLOR_DEFS['white']['lab']['l_min'] and
-                    abs(a) <= COLOR_DEFS['white']['lab']['a_range'] and
-                    abs(b) <= COLOR_DEFS['white']['lab']['b_range']):
-                    self._log(f"Detected WHITE: s={s:.0f}, v={v:.0f}, l={l:.0f}")
-                    return 'white'
-            
-            if s < COLOR_DEFS['black']['hsv']['s_max'] and v <= COLOR_DEFS['black']['hsv']['v_max']:
-                if l <= COLOR_DEFS['black']['lab']['l_max']:
-                    self._log(f"Detected BLACK: s={s:.0f}, v={v:.0f}, l={l:.0f}")
-                    return 'black'
-            
-            # Check red (special case)
+            # Check red (special ranges)
             for red_range in COLOR_DEFS['red']:
                 if (red_range['h_min'] <= h <= red_range['h_max'] and
                     s >= red_range['s_min'] and v >= red_range['v_min']):
                     self._log(f"Detected RED: h={h:.0f}, s={s:.0f}, v={v:.0f}")
                     return 'red'
+            
+            # Check black (least common)
+            if s < COLOR_DEFS['black']['hsv']['s_max'] and v <= COLOR_DEFS['black']['hsv']['v_max']:
+                if l <= COLOR_DEFS['black']['lab']['l_max']:
+                    self._log(f"Detected BLACK: s={s:.0f}, v={v:.0f}, l={l:.0f}")
+                    return 'black'
             
             self._log(f"UNKNOWN color: h={h:.0f}, s={s:.0f}, v={v:.0f}, l={l:.0f}, a={a:.0f}, b={b:.0f}")
             return 'unknown'
@@ -471,6 +476,10 @@ class LegoScanner:
             # Create output directory if it doesn't exist
             os.makedirs(output_dir, exist_ok=True)
 
+            # Create CSV output file
+            csv_output = os.path.join(output_dir, f"detected_pieces_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv")
+            csv_columns = ['page', 'shape_id', 'color', 'count']
+            
             self._log(f"Converting PDF to images: {pdf_path}")
             pages = convert_from_path(pdf_path, dpi=300)
             results = []
@@ -490,6 +499,9 @@ class LegoScanner:
                 'total_ground_truth': 0,
                 'missing_pieces': []
             }
+
+            # Process pages
+            all_detected_pieces = []
             
             # Convert PIL image to OpenCV format
             page_cv = cv2.cvtColor(np.array(pages[0]), cv2.COLOR_RGB2BGR)
@@ -528,8 +540,10 @@ class LegoScanner:
                         dst = cv2.merge(rgba, 4)
                         
                         # Save with transparent background
-                        output_path = os.path.join(output_dir, f"{piece_id}_{color}_{count}.png")
+                        output_path = os.path.join(output_dir, f"{piece_id}.png")
                         cv2.imwrite(output_path, dst)
+                        
+                        all_detected_pieces.append(piece_info)
                         results.append(piece_info)
                         stats['detected_by_page'][page_num].append(piece_info)
                         stats['perfect_matches'] += 1
@@ -537,6 +551,11 @@ class LegoScanner:
                     else:
                         stats['false_positives'] += 1
             
+            # Write results to CSV
+            if all_detected_pieces:
+                pd.DataFrame(all_detected_pieces).to_csv(csv_output, index=False, columns=csv_columns)
+                self._log(f"\nSaved detection results to {csv_output}")
+
             # Find missing pieces
             for _, gt_row in gt_pieces.iterrows():
                 piece_id = str(gt_row['Shape'])
@@ -608,3 +627,31 @@ class LegoScanner:
             self._log(f"║ • {piece['id']} ({piece['color'].lower()}, x{piece['count']:<2}){' ' * 15}║")
             
         self._log("╚═══════════════════════════════════════╝")
+
+class Command(BaseCommand):
+    help = 'Scan PDF pages for LEGO pieces and validate against ground truth'
+
+    def add_arguments(self, parser):
+        parser.add_argument('--pdf', type=str, required=True,
+                          help='Path to the PDF file to scan')
+        parser.add_argument('--output', type=str, required=True,
+                          help='Directory to save detected pieces')
+        parser.add_argument('--training', action='store_true',
+                          help='Enable training mode to validate against ground truth')
+
+    def handle(self, *args, **options):
+        try:
+            # Initialize scanner with training mode if specified
+            scanner = LegoScanner(self.stdout, training_mode=options['training'])
+            
+            # Scan PDF and get results
+            results = scanner.scan_pdf(options['pdf'], options['output'])
+            
+            if not results:
+                self.stdout.write(self.style.ERROR('No pieces detected in PDF'))
+                return
+                
+            self.stdout.write(self.style.SUCCESS(f'Successfully processed {len(results)} pieces'))
+            
+        except Exception as e:
+            raise CommandError(f'Error scanning PDF: {e}')
