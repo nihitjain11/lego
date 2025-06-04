@@ -141,57 +141,53 @@ class LegoScanner:
             # Get dominant colors
             hsv_color = kmeans_hsv.cluster_centers_[0]
             lab_color = kmeans_lab.cluster_centers_[0]
-            
             h, s, v = hsv_color
             l, a, b = lab_color
-            
-            # Enhanced color definitions based on observed values
+
+            # Updated color definitions based on observed log values
             COLOR_DEFS = {
                 'white': {
-                    'hsv': {'h_range': [95, 105], 's_max': 20, 'v_min': 140},
-                    'lab': {'l_range': [145, 155], 'a_range': [124, 128], 'b_range': [123, 127]}
+                    'hsv': {'h_min': 97, 'h_max': 101, 's_min': 12, 's_max': 22, 'v_min': 142, 'v_max': 152},
+                    'lab': {'l_min': 146, 'l_max': 156, 'a_min': 121, 'a_max': 131, 'b_min': 120, 'b_max': 130}
                 },
-                'black': {
-                    'hsv': {'s_max': 30, 'v_max': 50},
-                    'lab': {'l_max': 50}
+                'tan': {
+                    'hsv': {'h_min': 20, 'h_max': 25, 's_min': 75, 's_max': 95, 'v_min': 175, 'v_max': 205},
+                    'lab': {'l_min': 145, 'l_max': 155, 'a_min': 121, 'a_max': 131, 'b_min': 120, 'b_max': 130}
                 },
                 'red': [
-                    {'h_min': 0, 'h_max': 10, 's_min': 200, 'v_min': 150},
-                    {'h_min': 170, 'h_max': 180, 's_min': 200, 'v_min': 150}
-                ],
-                'tan': {
-                    'hsv': {'h_range': [20, 40], 's_min': 70, 's_max': 150, 'v_min': 140},
-                    'lab': {'l_range': [130, 200], 'a_range': [124, 128], 'b_range': [123, 127]}
-                }
+                    {'h_min': 0, 'h_max': 5, 's_min': 240, 's_max': 255, 'v_min': 175, 'v_max': 200},
+                    {'h_min': 20, 'h_max': 25, 's_min': 85, 's_max': 100, 'v_min': 175, 'v_max': 205}
+                ]
             }
-            
-            # Check white first (most common)
-            if (COLOR_DEFS['white']['hsv']['h_range'][0] <= h <= COLOR_DEFS['white']['hsv']['h_range'][1] and
-                s <= COLOR_DEFS['white']['hsv']['s_max'] and 
-                v >= COLOR_DEFS['white']['hsv']['v_min'] and
-                COLOR_DEFS['white']['lab']['l_range'][0] <= l <= COLOR_DEFS['white']['lab']['l_range'][1] and
-                COLOR_DEFS['white']['lab']['a_range'][0] <= a <= COLOR_DEFS['white']['lab']['a_range'][1] and
-                COLOR_DEFS['white']['lab']['b_range'][0] <= b <= COLOR_DEFS['white']['lab']['b_range'][1]):
+
+            # White detection
+            if (COLOR_DEFS['white']['hsv']['h_min'] <= h <= COLOR_DEFS['white']['hsv']['h_max'] and
+                COLOR_DEFS['white']['hsv']['s_min'] <= s <= COLOR_DEFS['white']['hsv']['s_max'] and
+                COLOR_DEFS['white']['hsv']['v_min'] <= v <= COLOR_DEFS['white']['hsv']['v_max'] and
+                COLOR_DEFS['white']['lab']['l_min'] <= l <= COLOR_DEFS['white']['lab']['l_max'] and
+                COLOR_DEFS['white']['lab']['a_min'] <= a <= COLOR_DEFS['white']['lab']['a_max'] and
+                COLOR_DEFS['white']['lab']['b_min'] <= b <= COLOR_DEFS['white']['lab']['b_max']):
                 self._log(f"Detected WHITE: h={h:.0f}, s={s:.0f}, v={v:.0f}, l={l:.0f}")
                 return 'white'
-            
-            # Check tan (second most common)
-            if (COLOR_DEFS['tan']['hsv']['h_range'][0] <= h <= COLOR_DEFS['tan']['hsv']['h_range'][1] and
+
+            # Tan detection
+            if (COLOR_DEFS['tan']['hsv']['h_min'] <= h <= COLOR_DEFS['tan']['hsv']['h_max'] and
                 COLOR_DEFS['tan']['hsv']['s_min'] <= s <= COLOR_DEFS['tan']['hsv']['s_max'] and
-                v >= COLOR_DEFS['tan']['hsv']['v_min'] and
-                COLOR_DEFS['tan']['lab']['l_range'][0] <= l <= COLOR_DEFS['tan']['lab']['l_range'][1] and
-                COLOR_DEFS['tan']['lab']['a_range'][0] <= a <= COLOR_DEFS['tan']['lab']['a_range'][1] and
-                COLOR_DEFS['tan']['lab']['b_range'][0] <= b <= COLOR_DEFS['tan']['lab']['b_range'][1]):
+                COLOR_DEFS['tan']['hsv']['v_min'] <= v <= COLOR_DEFS['tan']['hsv']['v_max'] and
+                COLOR_DEFS['tan']['lab']['l_min'] <= l <= COLOR_DEFS['tan']['lab']['l_max'] and
+                COLOR_DEFS['tan']['lab']['a_min'] <= a <= COLOR_DEFS['tan']['lab']['a_max'] and
+                COLOR_DEFS['tan']['lab']['b_min'] <= b <= COLOR_DEFS['tan']['lab']['b_max']):
                 self._log(f"Detected TAN: h={h:.0f}, s={s:.0f}, v={v:.0f}, l={l:.0f}")
                 return 'tan'
-            
-            # Check red (special ranges)
+
+            # Red detection (two ranges)
             for red_range in COLOR_DEFS['red']:
                 if (red_range['h_min'] <= h <= red_range['h_max'] and
-                    s >= red_range['s_min'] and v >= red_range['v_min']):
+                    red_range['s_min'] <= s <= red_range['s_max'] and
+                    red_range['v_min'] <= v <= red_range['v_max']):
                     self._log(f"Detected RED: h={h:.0f}, s={s:.0f}, v={v:.0f}")
                     return 'red'
-            
+
             # Check black (least common)
             if s < COLOR_DEFS['black']['hsv']['s_max'] and v <= COLOR_DEFS['black']['hsv']['v_max']:
                 if l <= COLOR_DEFS['black']['lab']['l_max']:

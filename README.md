@@ -156,3 +156,12 @@ The application uses SQLite as its database and stores:
 ## License
 
 [Your license information here]
+
+ref prompt:
+I want to build an image recognition module which
+inputs a pdf with a page listing different lego pieces picture, their count (like 2x,3x...) and their shapes id and outputs cropped images of lego pieces and a csv file with shape_id, color, and count
+
+consider for training this image recognition model page 132.pdf page 133.pdf as PDF files to be scanned and their cropped pieces are in static/pieces marked by their shape id and identified entries are there in LEGO Sorting Sheet - Sheet2.csv by page number matching the pdf page
+this can work as training or testing data and then we can start further
+
+I already have some code written, you may use that or start a new
